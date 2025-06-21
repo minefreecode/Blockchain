@@ -16,19 +16,19 @@ import (
 
 // Block Блок для хеширования данных
 type Block struct {
-	Pos       int // Номер позиции в блокчейне
-	Data      BookCheckout
-	Timestamp string
-	Hash      string // Хеш-значение в блоке. Получается из Data + Время + Pos
-	PrevHash  string
+	Pos       int          // Номер позиции в блокчейне
+	Data      BookCheckout // Данные проверки
+	Timestamp string       // Время
+	Hash      string       // Хеш-значение в блоке. Получается из Data + Время + Pos
+	PrevHash  string       //Предыдущий хеш, для проверки валидности
 }
 
 // BookCheckout Данные проверки книги
 type BookCheckout struct {
-	BookID       string `json:"book_id"`
-	User         string `json:"user"`
-	CheckoutDate string `json:"checkout_date"`
-	IsGenesis    bool   `json:"is_genesis"`
+	BookID       string `json:"book_id"`       //Идентификатор книги
+	User         string `json:"user"`          // Пользователь
+	CheckoutDate string `json:"checkout_date"` //Датат проверки
+	IsGenesis    bool   `json:"is_genesis"`    //Начальный ли блок в хеше
 }
 
 type Book struct {
@@ -40,9 +40,10 @@ type Book struct {
 }
 
 type Blockchain struct {
-	blocks []*Block
+	blocks []*Block //Массив блоков
 }
 
+// Сгенерировать хеш
 func (b *Block) generateHash() {
 	bytes, _ := json.Marshal(b.Data) //Перевод в байты
 
@@ -59,6 +60,7 @@ func (b *Block) validateHash(hash string) bool {
 	return b.Hash == hash //Проверка совпадения хешей
 }
 
+// AddBlock Добавить блок
 func (bc *Blockchain) AddBlock(data BookCheckout) {
 	prevBlock := bc.blocks[len(bc.blocks)-1]
 	block := CreateBlock(prevBlock, data)
