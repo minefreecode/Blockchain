@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/mux"
 	"io"
 	"log"
 	"net/http"
@@ -155,4 +156,27 @@ func GenesisBlock() *Block {
 // NewBlockchain Создание нового исходного блокчейна
 func NewBlockchain() *Blockchain {
 	return &Blockchain{[]*Block{GenesisBlock()}} //Создание блокчейна с нуля с первоначальным блоком
+}
+
+func main() {
+	blockchain = NewBlockchain()                    //Создание нового блокчейна
+	r := mux.NewRouter()                            //Создание маршрутизатора
+	r.HandleFunc("/", getBlockchain).Methods("GET") //Управление GET-запросами "/", получение блокчейна
+	r.HandleFunc("/", writeBlock).Methods("POST")   //Управление POST-запросами "/", запись блока в блокчейн
+	r.HandleFunc("/new", newBook).Methods("POST")   //Создание новой книги на маршруте "POST", "/new"
+
+	// Запуск горутины с информацией о блоках
+	go func() {
+		//Вывод информации о блоках
+		for _, block := range blockchain.blocks {
+			fmt.Printf("Предыдущий хеш: %x\n", block.PrevHash)
+			bytes, _ := json.MarshalIndent(block.Data, "", " ")
+			fmt.Printf("Данные: %v\n", string(bytes))
+			fmt.Printf("Хеш:%x\n", block.Hash)
+			fmt.Println()
+		}
+	}()
+
+	log.Println("Прослушка порта 3000")
+	log.Fatalln(http.ListenAndServe(":3000", r))
 }
