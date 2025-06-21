@@ -132,3 +132,27 @@ func writeBlock(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+// Блокчейн
+var blockchain *Blockchain
+
+// Получить блокчейн
+func getBlockchain(w http.ResponseWriter, r *http.Request) {
+	jbytes, err := json.MarshalIndent(blockchain.blocks, "", " ") //Сериализация блокчейна
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(err) //Запись ошибки в ответ
+		return
+	}
+	io.WriteString(w, string(jbytes)) //Запись в ответ JSON
+}
+
+// GenesisBlock Создание первоначального блока для всего блокчейна
+func GenesisBlock() *Block {
+	return CreateBlock(new(Block), BookCheckout{IsGenesis: true}) //Создать первоначальный блок
+}
+
+// NewBlockchain Создание нового исходного блокчейна
+func NewBlockchain() *Blockchain {
+	return &Blockchain{[]*Block{GenesisBlock()}} //Создание блокчейна с нуля с первоначальным блоком
+}
