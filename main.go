@@ -1,9 +1,14 @@
 package main
 
 import (
+	"crypto/md5"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
 	"strconv"
 	"time"
 )
@@ -89,4 +94,41 @@ func validBlock(block *Block, prevBlock *Block) bool {
 		return false
 	}
 	return true
+}
+
+// Создание новой книги
+func newBook(w http.ResponseWriter, r *http.Request) {
+	var book Book //Выделение памяти
+
+	if err := json.NewDecoder(r.Body).Decode(&book); err != nil { //Если не удалось декодировать книгу из тела запроса
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Printf("Невозможно создать: %v\n", err)
+		w.Write([]byte("Невозможно создать новый блок"))
+		return
+	}
+
+	h := md5.New()                                     //Создание объекта хеша
+	io.WriteString(h, book.ISBN+book.PublishData)      //Вывод данных книги
+	book.ID = fmt.Sprintf("%x", h.Sum(nil))            //Получение идентификатора книги
+	response, err := json.MarshalIndent(book, "", " ") //Подготовка ответа в виде сериализации JSON с отступами
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Printf("Не удалось распределить полезную нагрузку: %v\n", err)
+		w.Write([]byte("Невозможно сохранить данные"))
+		return
+	}
+	w.WriteHeader(http.StatusOK) //Запись статуса в ответ
+	w.Write(response)            //Запись ответа
+}
+
+// Запись блока
+func writeBlock(w http.ResponseWriter, r *http.Request) {
+	var checkoutItem BookCheckout //Выделение памяти для проверок книги
+
+	if err := json.NewDecoder(r.Body).Decode(&checkoutItem); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Printf("Невозможно записать блок: %v", err)
+		w.Write([]byte("Невозможно записать блок"))
+		return
+	}
 }
